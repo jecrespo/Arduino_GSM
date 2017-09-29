@@ -28,11 +28,15 @@
 #define GPRS_PASSWORD  "" // replace with your GPRS password
 
 // initialize the library instance
+GSMModem modemTest;
+GSMScanner scannerNetworks;
 GSMClient client;
 GPRS gprs;
-GSM gsmAccess;
+GSM gsmAccess(false); // include a 'true' parameter for debug enabled
 Timer t;
 dht DHT;
+
+String IMEI = "";
 
 // URL, path & port (for example: arduino.cc)
 char server[] = "www.aprendiendoarduino.com";
@@ -62,12 +66,32 @@ void setup() {
     }
   }
 
+  // get modem parameters
+  // IMEI, modem unique identifier
+  Serial.print("Modem IMEI: ");
+  IMEI = modemTest.getIMEI();
+  IMEI.replace("\n", "");
+  if (IMEI != NULL)
+    Serial.println(IMEI);
+
+  // currently connected carrier
+  Serial.print("Current carrier: ");
+  Serial.println(scannerNetworks.getCurrentCarrier());
+
+  // returns strength and ber
+  // signal strength in 0-31 scale. 31 means power > 51dBm
+  // BER is the Bit Error Rate. 0-7 scale. 99=not detectable
+  Serial.print("Signal Strength: ");
+  Serial.print(scannerNetworks.getSignalStrength());
+  Serial.println(" [0-31]");
+
   //Get IP.
   IPAddress LocalIP = gprs.getIPAddress();
-  Serial.print("GPRS IP address=");
+  Serial.print("GPRS IP address = ");
   Serial.println(LocalIP);
 
   t.every(30000, saveData);
+  t.every(60000, checkSignal);
 }
 
 void loop() {
@@ -118,3 +142,10 @@ void saveData() {
     Serial.println("connection failed");
   }
 }
+
+void checkSignal() {
+  Serial.print("Signal Strength: ");
+  Serial.print(scannerNetworks.getSignalStrength());
+  Serial.println(" [0-31]");
+}
+
